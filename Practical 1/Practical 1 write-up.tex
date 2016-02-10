@@ -2,15 +2,11 @@
 \usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
 \geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
 %\geometry{landscape}                		% Activate for rotated page geometry
-%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
 								% TeX will automatically convert eps --> pdf in pdflatex		
 \usepackage{amssymb}
 \usepackage{booktabs}
-%SetFonts
-
-%SetFonts
-
 
 \title{Practical 1}
 \author{Samuel Daulton, Taylor Killian, Andrew Petschek (ML Marauders)}
@@ -20,7 +16,9 @@
 \maketitle
 \section{Technical Approach}
 \subsection{Initial Attempts} 
-Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We calculated the top thirty to sixty components, and compared which number of principal components appeared to be best from the start. As stated in our results section below, PCA led to satisfactory reduction of RMSE. 
+
+
+Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We calculated the top thirty to sixty components, and compared which number of principal components appeared to be best from the start. As stated in our results section below, PCA led to satisfactory reduction of RMSE.
 
 We also performed some basic feature engineering upfront as well to couple with the PCA. There is a hypothesis that the number of branches influences the gap between HOMO and LUMO levels, and we pulled relevant compounds that were highlighted in a theoretical study on this topic conducted by Padtaya Pukpayat of the University of Nevada Las Vegas. This specific feature aggregates the number of active features, meaning if there are more features that are active in a compound, then there may be a higher orbital overlap and, thus, a lower HOMO-LUMO gap. A final initial feature we used was the presence of a benzene ring in the compound using the SMILES encoding; we could identify a benzene ring  which are more conjugated (i.e., closer together in energy). 
 
@@ -38,6 +36,9 @@ To prevent overfitting on out-of-sample data sets when evaluating various hyperp
 
 When estimating hyperparamters for each of our models below, we employed a grid search. Since we do not know which values of hyperparameters may minimize our loss function across models, we run each model several times using an array of hyperparameter values ranging from small to large. At the end of this loop, we selected the hyperparameter value(s) that yielded a minimum loss. 
 
+One of the first new models we tried was an Extra Trees Regressor. Extra Trees Regressor can be thought of as a close alternative to a Random Forest. Extra Trees randomly draws estimators from the entire training set instead of a bootstrap sample and these splits are chosen at random. We carried out Extra Trees Regression with and without our insight from the PCA. We then built upon this ensemble method by incorporating AdaBoost. AdaBoost fits a sequence of weak learners on repeatedly modified versions of the training set. The predictions are assigned weights which update through a loop. These weights were measured according to two loss functions: linear and squared error. Together, Adaboost with Extra Trees were used.
+
+
 \subsection{Lasso} 
 
 \subsection{ExtraTrees} 
@@ -54,7 +55,7 @@ When estimating hyperparamters for each of our models below, we employed a grid 
 \label{my-label}
 \begin{tabular}{@{}ll@{}}
 \toprule
-\textbf{Model Description} & \textbf{RMSE} \\ \midrule
+\textbf{Model} & \textbf{RMSE} \\ \midrule
 Random Forest  & 0.2  \\
 Linear Regression & 0.3  \\ \bottomrule
 \end{tabular}
