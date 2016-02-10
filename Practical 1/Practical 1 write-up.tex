@@ -2,17 +2,13 @@
 \usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
 \geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
 %\geometry{landscape}                		% Activate for rotated page geometry
-%\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
+\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
 								% TeX will automatically convert eps --> pdf in pdflatex		
 \usepackage{amssymb}
 \usepackage{booktabs}
-%SetFonts
 
-%SetFonts
-
-
-\title{Practical 1}
+\title{Practical 1 - WORKING DRAFT}
 \author{Samuel Daulton, Taylor Killian, Andrew Petschek (ML Marauders)}
 %\date{}							% Activate to display a given date or no date
 
@@ -20,7 +16,9 @@
 \maketitle
 \section{Technical Approach}
 \subsection{Initial Attempts} 
-Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We calculated the top thirty to sixty components, and compared which number of principal components appeared to be best from the start. As stated in our results section below, PCA led to satisfactory reduction of RMSE. 
+
+
+Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We calculated the top thirty to sixty components, and compared which number of principal components appeared to be best from the start. As stated in our results section below, PCA led to satisfactory reduction of RMSE.
 
 We also performed some basic feature engineering upfront as well to couple with the PCA. There is a hypothesis that the number of branches influences the gap between HOMO and LUMO levels, and we pulled relevant compounds that were highlighted in a theoretical study on this topic conducted by Padtaya Pukpayat of the University of Nevada Las Vegas. This specific feature aggregates the number of active features, meaning if there are more features that are active in a compound, then there may be a higher orbital overlap and, thus, a lower HOMO-LUMO gap. A final initial feature we used was the presence of a benzene ring in the compound using the SMILES encoding; we could identify a benzene ring  which are more conjugated (i.e., closer together in energy). 
 
@@ -38,13 +36,13 @@ To prevent overfitting on out-of-sample data sets when evaluating various hyperp
 
 When estimating hyperparamters for each of our models below, we employed a grid search. Since we do not know which values of hyperparameters may minimize our loss function across models, we run each model several times using an array of hyperparameter values ranging from small to large. At the end of this loop, we selected the hyperparameter value(s) that yielded a minimum loss. 
 
-\subsection{Lasso} 
+Examples of this grid search method were evident in three new methods we employed: Lasso Regression, Ridge Regression, and Elastic Net Regression. Lasso regression is a linear model with a regularization term (i.e., L1 prior). The constant that multiplies the L1 term is a hyperparameter that can range between 0 and 1. We noticed that if alpha = 0, then we have reduced this regression back to a simple linear model without regularization. Ridge Regression is similar to Lasso, except it uses a L2 prior. Similarly, if alpha = 0 in our Ridge Regression, we have reverted back to linear least squares. Elastic Net can be thought of as a combination of Lasso and Ridge Regression in that it combines both L1 and L2 priors as regularization terms. There are two hyperparameters in Elastic Net which measure the relationship between the L1 and L2 penalties. Here, if alpha = 0, we again have a linear least squares regression and if the ratio equals = 0 we have only Ridge Regression and if the ratio = 1 we have only Lasso Regression. Thus, we employed grid search to determine the right balance needed for loss minimization. 
 
-\subsection{ExtraTrees} 
+In addition to linear modeling, we also employed ensemble methods, including an Extra Trees Regressor. Extra Trees Regressor can be thought of as a close alternative to a Random Forest. Extra Trees randomly draws estimators from the entire training set instead of a bootstrap sample and these splits are chosen at random. We carried out Extra Trees Regression with and without our insight from the PCA. We then built upon this ensemble method by incorporating AdaBoost. AdaBoost fits a sequence of weak learners on repeatedly modified versions of the training set. The predictions are assigned weights which update through a loop. These weights were measured according to two loss functions: linear and squared error. Together, Adaboost with Extra Trees were used.
 
-\subsection{Adaboost with ExtraTrees} 
- 
-\subsection{Steepest Descent} 
+Finally, we did classification --
+insert paragraph about classification.
+.25 bins. used for labeling. then combine with RF/
 
 \section{Results}
 
@@ -54,14 +52,27 @@ When estimating hyperparamters for each of our models below, we employed a grid 
 \label{my-label}
 \begin{tabular}{@{}ll@{}}
 \toprule
-\textbf{Model Description} & \textbf{RMSE} \\ \midrule
-Random Forest  & 0.2  \\
+\textbf{Model} & \textbf{RMSE (Public Score)} \\ \midrule
+Extra Trees Regression and PCA (n=60)  & 0.15337  \\
+Lasso and PCA (n=60)  & ???  \\
+Extra Trees Regression and PCA (n=45)   & 0.22972  \\
+Extra Trees Regression with AdaBoost  & 0.29581  \\
 Linear Regression & 0.3  \\ \bottomrule
 \end{tabular}
 \caption{Model Results}
 \end{table}
 
 \section{Discussion}
+This was an exciting opportunity to be able to work with a complex dataset on a machine learning problem with real-world implications. We approached this task as a prediction problem rather than an estimation problem. While prediction and estimation are similar, there is nuance. While estimation concerns itself more with the structural properties of the model and a more physical understanding and interpretation of coefficients, prediction cares most about loss minimization and the models ability to generalize to new data. Thus, we approached this problem with an open mind and a determination to find a minimal loss score without preference for the type of model we employed. 
+
+We found PCA to not only increase our results, but to also decrease computation time. This is an important aspect to our modeling. While computation time is not necessarily a benchmark we are graded on, it is an integral component to scientific computing. As data sets become large, computation time required increases. Thus, one's ability to effectively reduce the time it takes to fit a model without sacrificing accuracy is highly valued. Faster running models allowed us to iterate more quickly.
+
+We found feature engineering to be a critical component to our success. Our modeling output is only as good as the input we provide. We found that our feature engineering efforts provided our model with regression input it needed for better training. 
+
+Further, we believe an ensemble method of models to be the most robust with such a complicated data set. Extra trees coupled with our classification algorithm was a great way to combine findings. 
+
+add more
+
 
 %\subsection{}
 
