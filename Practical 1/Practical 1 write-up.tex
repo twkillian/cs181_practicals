@@ -6,7 +6,7 @@
 \usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
 								% TeX will automatically convert eps --> pdf in pdflatex		
 \usepackage{amssymb}
-
+\usepackage{booktabs}
 %SetFonts
 
 %SetFonts
@@ -47,6 +47,19 @@ When estimating hyperparamters for each of our models below, we employed a grid 
 \subsection{Steepest Descent} 
 
 \section{Results}
+
+\begin{table}[]
+\centering
+
+\label{my-label}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Model Description} & \textbf{RMSE} \\ \midrule
+Random Forest  & 0.2  \\
+Linear Regression & 0.3  \\ \bottomrule
+\end{tabular}
+\caption{Model Results}
+\end{table}
 
 \section{Discussion}
 
