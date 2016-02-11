@@ -41,8 +41,15 @@ Examples of this grid search method were evident in three new methods we employe
 In addition to linear modeling, we also employed ensemble methods, including an Extra Trees Regressor. Extra Trees Regressor can be thought of as a close alternative to a Random Forest. Extra Trees randomly draws estimators from the entire training set instead of a bootstrap sample and these splits are chosen at random. We carried out Extra Trees Regression with and without our insight from the PCA. We then built upon this ensemble method by incorporating AdaBoost. AdaBoost fits a sequence of weak learners on repeatedly modified versions of the training set. The predictions are assigned weights which update through a loop. These weights were measured according to two loss functions: linear and squared error. Together, Adaboost with Extra Trees were used.
 
 Finally, we did classification --
-insert paragraph about classification.
-.25 bins. used for labeling. then combine with RF/
+Classification
+
+Random Forest vs. Extra trees - vairance vs bias trade off
+
+number features set to sqrt n 
+
+Number of trees looped 10, 23, 64, 100
+
+re run on 
 
 \section{Results}
 
