@@ -9,7 +9,7 @@
 \usepackage{booktabs}
 
 \title{Practical 1 - WORKING DRAFT}
-\author{Samuel Daulton, Taylor Killian, Andrew Petschek (ML Marauders)}
+\author{Samuel Daulton, Taylor Killian, and Andrew Petschek (ML Marauders)}
 %\date{}							% Activate to display a given date or no date
 
 \begin{document}
@@ -28,7 +28,7 @@ We combined this initial feature generation with PCA, and turned to the existing
 
 To create new features, we turned to the RDKit. Specifically, we leveraged methods that process molecules objects and return integers. We felt integer outputs would work best with our modeling efforts and avoided outputs that non-integerse (e.g., strings and vectors). 114 new features were created that spanned four main areas: general feature generation (e.g., number of branches, number of bonds), descriptors (e.g., molecular weight, number of valence electrons), calculation of Lipinksi parameters, and fragment descriptors (e.g., number of aliphatic carboxylic acids). The methods that generated these features act upon molecule objects, which we created using the RDKit API. Molecule objects take up a lot of memory, so our technical approach to feature generation was to divide the processing into four parts, which were ultimately merged together at the end. 
 
-In addition to using RDKit, we implemented our own algorithms to generate new features. The first involved the use of random forests. We set the number of features per tree to be equal to $\frac{1}{\sqrt{p}}$ and set the number of estimators to be 128. We had read in THIS PAPER that a good range of estimators is 64-128. Anything more would result in additional computation time with minimal gains. Using this regression output, we were able to deduce which features available were deemed to be most important. We took the top 25 and created 25C2 additional columns. We hypothesized that there are likely interactions between features, thus we created new features that were the product of 25C2 features. 
+In addition to using RDKit, we implemented our own algorithms to generate new features. The first involved the use of random forests. We set the number of features per tree to be equal to $\frac{1}{\sqrt{p}}$ and set the number of estimators to be 128. We had read in THIS PAPER that a good range of estimators is 64-128. Anything more would result in additional computation time with minimal gains. We used this technical methodology in our modeling techniques as well (see below). Using this regression output, we were able to deduce which features available were deemed to be most important. We took the top 25 and created 25C2 additional columns. We hypothesized that there are likely interactions between features, thus we created new features that were the product of 25C2 features. 
 
 A final method for feature generation was that of logistic regression. We performed logistic regression on the gap values, however we performed pre processing and rounded each sample to the nearest half integer. This way, we could provide a label to our data along the lines of "this is what a 1.5 gap sample looks like". We then aimed to use this classification labels as features for our modeling.
 
