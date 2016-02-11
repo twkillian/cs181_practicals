@@ -89,9 +89,6 @@ Finally, with respect to our workflow, we carried out an array of models to get 
 Unfortunately, our logistic regression step used to classify data points did not translate to great results. While we had found very low training RMSE scores hovering around 0.093, they ultimately led to test set results of 0.18256. We feel this is due to an oversight in how the regression was performed. We took our entire training set and fit the logistic regression model onto it. We then used these predicted labels as part of our feature set used in the validation loop. In hindsight, we believe we should have used a separate training set to fit the logistic classifier. Then take a new training set and predict labels using our logistic classifier. Then we could continue with our cross-validation procedures. Unfortunately, time and sample size were factors. Not only was there limited time to run our final Random Forest models, but we felt we may not have had a large enough sample size to create two effective training sets for the stated purposes above.
 
 \newpage
-\section{References}
-
-\newpage
 \section{Code}
 
 \definecolor{keywords}{RGB}{255,0,90}
