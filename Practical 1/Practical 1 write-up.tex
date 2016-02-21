@@ -9,7 +9,7 @@
 \usepackage{booktabs}
 \usepackage[procnames]{listings}
 \usepackage{color}
-\title{Practical 1 - WORKING DRAFT}
+\title{Practical 1}
 \author{Samuel Daulton, Taylor Killian, and Andrew Petschek (ML Marauders)}
 %\date{}							% Activate to display a given date or no date
 
@@ -19,32 +19,28 @@
 \subsection{Initial Attempts} 
 
 
-Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We also performed some basic feature engineering upfront to couple with the PCA. There is a hypothesis that the number of branches influences the gap between HOMO and LUMO levels, and we pulled relevant compounds that were highlighted in a theoretical study on this topic conducted by Padtaya Pukpayat of the University of Nevada Las Vegas. This specific feature aggregates the number of active features, meaning if there are more features that are active in a compound, then there may be a higher orbital overlap and, thus, a lower HOMO-LUMO gap. A final initial feature we added was the presence of a benzene ring in the compound; we could identify a benzene ring which appeared to be more conjugated (i.e., closer together in energy). We combined this initial feature generation with PCA, and turned to the existing methods to see if it we gained improvement over baseline. The results were promising, but we decided additional, more robust features needed to be engineered for improved impact. 
+Our initial approach to expand on the sample code provided to us for this machine learning problem was to implement Principal Component Analysis (PCA) to gain a better understanding of the interdependencies between features and to effectively reduce our feature set. We also performed some basic feature engineering upfront to couple with the PCA. There is a hypothesis that the number of branches influences the gap between HOMO and LUMO levels, and we pulled relevant compounds that were highlighted in a theoretical study on this topic conducted by Padtaya Pukpayat of the University of Nevada Las Vegas. Another feature aggregates the number of active features, meaning if there are more features that are active in a compound, then there may be a higher orbital overlap and, thus, a lower HOMO-LUMO gap. A final initial feature we added was the presence of a benzene ring in the compound; we could identify a benzene ring which appeared to be more conjugated (i.e., closer together in energy). We combined this initial feature generation (referred to as Stage I Features in Results section below) with PCA, and turned to the existing methods to see if it we gained improvement over baseline. The results were promising, but we decided additional, more robust features needed to be engineered for improved impact. 
 
 \subsection{Feature Engineering} 
 
-To create new features, we turned to the RDKit. Specifically, we leveraged molecule object methods that returned integers. We felt integer outputs would work best with our modeling efforts, and we avoided methods that would output non-integers (e.g., strings and vectors). 114 new features were created in this way that spanned four main areas: general feature generation (e.g., number of branches, number of bonds), descriptors (e.g., molecular weight, number of valence electrons), calculation of Lipinksi parameters, and fragment descriptors (e.g., number of aliphatic carboxylic acids). As stated above, these methods act on molecule objects, which take up a lot of memory, so our technical approach to feature generation was to divide the processing into four separate parts, which were ultimately merged together at the end. 
+To create new features, we turned to the RDKit. Specifically, we leveraged molecule object methods that returned integers. We felt integer outputs would work best with our modeling efforts, and we avoided methods that would output non-integers (e.g., strings and vectors). 114 new features (referred to as Stage II features in Results section below) were created in this way that spanned four main areas: general feature generation (e.g., number of branches, number of bonds), descriptors (e.g., molecular weight, number of valence electrons), calculation of Lipinksi parameters, and fragment descriptors (e.g., number of aliphatic carboxylic acids). As stated above, these methods act on molecule objects, which take up a lot of memory, so our technical approach to feature generation was to divide the processing into four separate parts, which were ultimately merged together at the end. 
 
-In addition to using RDKit, we implemented our own algorithms to create additional features. We had a hypothesis that there likely existed interactions between features that would lead to larger HOMO-LUMO gaps. Thus, in addition to including a linear basis for each feature, we aimed to also include the product of pairs of features as well. Since we had well over 100 features, we decided we would look at the combinations between the top 25 most important features. To determine the top 25, we turned to Random Forests, which can output the importance weighting of each feature in our feature space. Using this regression output, we took the top 25 features and created $25C2$ (or 300) new features, which were the products of two features within an unique combinatoric pair. 
+In addition to using RDKit, we implemented our own algorithms to create additional features. We had a hypothesis that there likely existed interactions between features that would lead to larger HOMO-LUMO gaps. Thus, in addition to including a linear basis for each feature, we aimed to also include the product of pairs of features as well. Since we had well over 100 features, we decided we would look at the combinations between the top 25 most important features. To determine the top 25, we turned to Random Forests, which can provide the importance weighting of each feature in our feature space. Using this output, we took the top 25 features and created $25C2$ (or 300) new features, which were the products of two features within a unique combinatoric pair (referred to as Stage III features in Results section below). 
 
-A final method for feature generation we used was based on logistic regression. Performing first some pre-processing, we rounded each gap value to the nearest half integer which we set as the labels we wished to predict. We ultimately used these labels as categorical features that were included in our overall feature set. 
+A final method we used for feature generation was based on logistic regression. After pre-processing the training data, we rounded each gap value to the nearest half integer which we set as the labels we used to train a classifier to predict the labels of the test set. We then used these labels as categorical features (referred to as Logistic in Results section below) that were included in our overall feature set. 
 
 \subsection{Modeling Techniques} 
 
 We not only built off of the simple linear regression and random forest model classes provided to us, but also approached this machine learning problem from other modeling angles as well. Across all methods, to prevent overfitting out-of-sample data sets when evaluating various hyperparameters for estimators, we split our training set into a training set and a validation set (67-33 split). This way, we avoided any knowledge of the test set leaking into our models and hurting their ability to generalize to new data. We had initially contemplated a cross-validation loop, where the creation of discrete training and validation sets would no longer be necessary to increase training sample size. However, since we had roughly one million samples to begin with, we decided we would have sufficient data to carry out our modeling using discrete training and validation sets. When estimating hyperparamters for each of our models below, we employed a grid search. Since we did not know which hyperparameter values may minimize our loss functions across models, we ran each model several times across an array of hyperparameter values ranging from small to large. At the end of the loop, we selected the hyperparameter value(s) that yielded a minimum loss when tested against our validation set and then re-trained the model on the entire training set (including the validation set).
 
-Examples of this grid search method were evident in three new methods we employed: Lasso Regression, Ridge Regression, and Elastic Net Regression (using library packages from scikit-learn). We felt attempting to use regularization techniques such as these would be a good idea as they would penalize very complex models and would likely fit out of sample data better. Lasso regression is a linear model with a regularization term (i.e., L1 prior). The constant, $\alpha$ that multiplies the L1 term is a hyperparameter that can range between 0 and 1. We noticed that if $\alpha$ = 0, then we have reduced this regression back to a simple linear model without regularization. Ridge Regression is similar to Lasso, except it uses a L2 prior. Similarly, if $\alpha$ = 0 in our Ridge Regression, we have reverted back to linear least squares. Elastic Net can be thought of as a combination of Lasso and Ridge Regression in that it combines both L1 and L2 priors as regularization terms. There are two hyperparameters in Elastic Net which measure the relationship between the L1 and L2 penalties, $\alpha$ and a ratio term. Here, if $\alpha$ = 0, we again have a linear least squares regression and if the ratio = 0 we have only Ridge Regression and if the ratio = 1 we have only Lasso Regression. Thus, we employed grid search to determine the right balance needed for loss minimization. With similar results across all three, we ultimately landed on using Lasso Regression for our final submission. Lasso regression is able to zero out features completely while Ridge Regression, for example, cannot. For this reason, we decided Lasso Regression may be a better bet to generalize to the new test data set moving forward since we had hundreds of features. 
+Examples of this grid search method were evident in three new methods we employed: Lasso Regression, Ridge Regression, and Elastic Net Regression (using library packages from scikit-learn). We felt attempting to use regularization techniques such as these would be a good idea as they would penalize very complex models and would likely fit out-of-sample data better. Lasso regression is a linear model with a regularization term (i.e., L1 prior). The constant $\alpha$ that multiplies the L1 term is a hyperparameter that can range between 0 and 1. We noticed that if $\alpha$ = 0, then we have reduced this regression back to a simple linear least squares model without regularization. Ridge Regression is similar to Lasso, except it uses a L2 prior. Similarly, if $\alpha$ = 0 in our Ridge Regression, we have reverted back to linear least squares. Elastic Net can be thought of as a combination of Lasso and Ridge Regression in that it combines both L1 and L2 priors as regularization terms. There are two hyperparameters in Elastic Net which measure the relationship between the L1 and L2 penalties, $\alpha$ and a ratio term between the two. Here, if $\alpha$ = 0, we again have a linear least squares regression and if the ratio = 0 we have only Ridge Regression and if the ratio = 1 we have only Lasso Regression. Thus, we employed grid search to determine the right balance needed for loss minimization. With similar training-validation results across all three, we ultimately landed on using Lasso Regression for our final submission. Lasso regression is able to zero out features completely while Ridge Regression, for example, does not (given the differences between an absolute value function and a quadratic). For this reason, we decided Lasso Regression may be a better bet to generalize to the new test data set moving forward since we had hundreds of features. 
 
-In addition to linear modeling, we also employed ensemble methods, including Random Forests and Extra Trees Regressors (using library packages from scikit-learn), which can be thought of as a close alternative to a Random Forest. In our Random Forest regression we set the number of features per tree to be equal to $\frac{1}{\sqrt{p}}$ and used a grid search to compare number of estimators between 10 and 128. We had read in THIS PAPER that a good range of estimators to be 64-128, as anything more would result in additional computation time with minimal gains, which is what dictated our rationale for the grid search bounds. We repeated this similar approach for Extra Trees Regressors. As stated above, Extra Trees is similar to Random Forests, where Extra Trees randomly draws estimators from the entire training set instead of a bootstrap sample and these splits are chosen at random. This additional set of randomness can lead to a reduction in variance and an increase in bias. For this reason, while we did run tests using Extra Trees Regressors, we ultimately decided to use Random Forests instead for their potentially lower bias and better ability to generalize to new data. 
+In addition to linear modeling, we also employed ensemble methods (using library packages from scikit-learn), including Random Forests and Extra Trees Regressors. In our Random Forest regression we set the number of features per tree to be equal to $\frac{1}{\sqrt{p}}$ and used a grid search to compare number of estimators between 10 and 128. We had read in a paper by Oshiro et al. in 2012 that a good range of estimators is between 64-128, as anything more would result in additional computation time with minimal gains. We repeated this similar approach for Extra Trees Regressors. As stated above, Extra Trees is similar to Random Forests, where Extra Trees uses a random subset of features, but they differ from Random Forests in that thresholds are randomly determined for each feature where the  best threshold is then picked for splitting. This additional set of randomness can lead to a reduction in variance and an increase in bias. For this reason, while we did run tests using Extra Trees Regressors, we ultimately decided to use Random Forests instead for their potentially lower bias and better ability to generalize to new data. 
 
-A few extensions were used across the methods above. The first involves PCA. We had initially thought that the use of PCA would be beneficial, as it would reveal the most important features in our feature space up front. We thought that this would improve performance. We found, however, that this did not seem to be the case. Reducing our feature space using PCA did not seem to improve our predictions (and in some cases it even led to negative impact). We also considered standardizing all non-binary features to ensure they are normally distributed. We felt normally distributed data would potentially lead to more accurate predictions. This too, like PCA, seemed to lead to worse results. Thus, we ultimately decided not to standardize our data. Finally, we tested models as we added new features along the way. This was a fluid process of adding features we felt to be better predictors; we did not have all features all at once at the start.
-
-DO WE WANT TO ADD ADABOOST, GRADIENT DESCENT? Finally, we also built upon this ensemble method by incorporating AdaBoost. AdaBoost fits a sequence of weak learners on repeatedly modified versions of the training set. The predictions are assigned weights which update through a loop. These weights were measured according to two loss functions: linear and squared error. Together, Adaboost with Extra Trees were used.
-
-
+A few extensions were used across the methods above. The first involves PCA. We had initially thought that the use of PCA would be beneficial, as it would reveal the most important features in our feature space up front. We thought that this would improve performance. We found, however, that this did not always seem to be the case. Reducing our feature space using PCA did not seem to always improve our predictions (and in some cases it even led to negative impact with our Stage III features). We also considered standardizing all non-binary features to ensure they are normally distributed. We felt normally distributed data would potentially lead to more accurate predictions. This too, like PCA, seemed to lead to worse results at times. Thus, we ultimately decided not to standardize our data. Finally, we tested models as we added new features along the way. This was a fluid process of adding features we felt to be better predictors; we did not have all features all at once at the start.
 
 \section{Results}
-We attempted many permutations of the above modeling techniques spanning the inclusion of various feature sets, models, hyperparameters, PCA, standardization etc... We found our best results to be when we used our full feature set and a Random Forrest Regressor with X trees. See table 1 for our RMSE results. 
+We attempted many permutations of the above modeling techniques spanning the inclusion of various feature sets, models, hyperparameters, and Principal Component Analysis. We found our best results to be when we used our full feature set (Stage III) and a Random Forest Regressor. See Table 1 for our RMSE results. 
 
 \begin{table}[]
 \centering
@@ -53,11 +49,30 @@ We attempted many permutations of the above modeling techniques spanning the inc
 \begin{tabular}{@{}ll@{}}
 \toprule
 \textbf{Model} & \textbf{RMSE (Public Score)} \\ \midrule
-Extra Trees Regression and PCA (n=60)  & 0.15337  \\
-Lasso and PCA (n=60)  & ???  \\
-Extra Trees Regression and PCA (n=45)   & 0.22972  \\
-Extra Trees Regression with AdaBoost  & 0.29581  \\
-Linear Regression & 0.3  \\ \bottomrule
+Random Forest with Stage III Features & 0.13842\\
+Random Forest with Stage III Features  + PCA & 0.14269\\
+Lasso with Stage III Features &  0.16919\\
+Random Forest with Stage III Features + Logistic &  0.18256 \\
+Lasso with Stage III Features + Logistic & 0.22629 \\
+
+
+\\
+Extra Trees with Stage II Features + PCA & 0.15337\\
+Extra Trees with Stage II Features & 0.16863     \\
+Lasso with Stage II Features & 0.22217\\
+\\
+
+Extra Trees with Stage I Features + PCA &  0.22972 \\
+Extra Trees with Stage I Features & 0.22973\\
+Lasso with Stage I Features + PCA & 0.27116\\
+Lasso with Stage I Features &  0.29846\\
+
+
+\\
+Random Forest Baseline &  0.27207\\
+Linear Regression Baseline & 0.29846  \\
+
+\bottomrule
 \end{tabular}
 \caption{Model Results}
 \end{table}
@@ -65,12 +80,16 @@ Linear Regression & 0.3  \\ \bottomrule
 \section{Discussion}
 This was an exciting opportunity to be able to work with a complex dataset on a machine learning problem with real-world implications. We approached this task as a prediction problem rather than an estimation problem. While prediction and estimation are similar, there is nuance between the two. While estimation concerns itself more with understanding the structural properties of the model and interpretation of coefficients, prediction cares most about loss minimization and a model's ability to generalize predictions to new data. Without context and heavy domain knowledge, it is hard to carry out estimation. We were however, able to carry out prediction. 
 
-A lot of our rationale for specific methods used in our modeling have been stated above in our Technical Approach section. Thus, they will not be repeated here. However, we will touch on several driving forces that, at a high level, dictated our actions through this project. As stated above in the technical approach section, we found feature engineering to be a critical component to our success. Our process involved adding a few features then running models, tuning parameters and making extensions until our RMSE values appeared to hit a wall. We would then look back at our features and brainstorm new features we could engineer. Once new features were added, we often saw an immediate bump in performance. We repeated this cycle several times throughout our time working on this project. We discovered that our modeling output could only be as good as the inputs we provide. Thus, better feature engineering provided our models with the regression inputs required for better training and prediction. 
+A lot of our rationale for specific methods used in our modeling have been stated above in our Technical Approach section. Thus, they will not be repeated here. However, we will touch on several driving forces that, at a high level, dictated our actions throughout this project. As stated above in the technical approach section, we found feature engineering to be a critical component to our success. Our process involved adding a few features then running models, tuning parameters and making extensions until our RMSE values appeared to hit a wall. We would then look back at our features and brainstorm new features we could engineer. Once new features were added, we often saw an immediate bump in performance. We repeated this cycle several times throughout our time working on this project. We discovered that our modeling output could only be as good as the inputs we provide. Thus, better feature engineering provided our models with the regression inputs required for better training and prediction. 
 
-Another interesting nuance was PCA. We had initially believed PCA to be useful tool in prediction. We felt it would reduce our feature space to only the most predictive features. We found out however, that PCA did not help us much. But, before we realized this we would run a model twice: once with PCA and once without. This way we could better isolate the impact of PCA on our efforts. While PCA did not help much with our prediction accuracy, it did reduce computation time significantly. While computation time is not a benchmark that we are graded on, it is an integral component to scientific computing. As data sets become large, computation time required increases. Thus, one's ability to effectively reduce the time it takes to fit a model without sacrificing accuracy is highly valued. We often ran several models in parallel to speed up our analysis, but we could have considered additional parallel processing techniques (e.g., multi-processing, multi-threading) to speed up computation time.
+Another interesting nuance was PCA. We had initially believed PCA to be useful tool in prediction. We felt it would reduce our feature space to only the most predictive features. We found out however, that PCA did not help us much when using our Stage III features. But, before we realized this we would run a model twice: once with PCA and once without. This way we could better isolate the impact of PCA on our efforts. While PCA did not help much with our prediction at the end, it did reduce our computation time. While computation time is not a benchmark that we are graded on, it is an integral component to scientific computing. As data sets become large, computation time required increases. Thus, one's ability to effectively reduce the time it takes to fit a model without sacrificing accuracy is highly valued. We often ran several models in parallel to speed up our analysis, but we could have considered additional parallel processing techniques (e.g., multi-processing, multi-threading) to speed up computation time.
 
-After we had carried out an array of models to get a handle on what seems to work initially, we wondered if we could chain together modeling techniques to lead to better results. This rationale drove our final modeling efforts. We started with Random Forest regression to determine the best features in our data set. We then took those best features and used them to create 300 additional interaction features which we then fed into a logistic classifier model. This logistic classifier model would provide additional classification features describing what each sample resembled in terms of HOMO-LUMO gap value. Once these features were made, we re-ran a new Random Forest model which could leverage these 300+ new features in addition to the hundreds that we already had.
+Finally, with respect to our workflow, we carried out an array of models to get a handle on what seemed to work initially, yet we wondered if we could chain together modeling techniques to lead to better results. This rationale drove our final modeling efforts. We started with Random Forest regression to determine the best features in our data set. We then took those best features and used them to create 300 additional interaction features which we then fed into a logistic classifier model. This logistic classifier model would provide additional classification features describing what each sample resembled in terms of HOMO-LUMO gap value. Once these features were made, we re-ran a new Random Forest model which could leverage these 300+ new features in addition to the hundreds that we already had. 
 
+Unfortunately, our logistic regression step used to classify data points did not translate to great results. While we had found very low training RMSE scores hovering around 0.093, they ultimately led to test set results of 0.18256. We feel this is due to an oversight in how the regression was performed. We took our entire training set and fit the logistic regression model onto it. We then used these predicted labels as part of our feature set used in the validation loop. In hindsight, we believe we should have used a separate training set to fit the logistic classifier. Then take a new training set and predict labels using our logistic classifier. Then we could continue with our cross-validation procedures. Unfortunately, time and sample size were factors. Not only was there limited time to run our final Random Forest models, but we felt we may not have had a large enough sample size to create two effective training sets for the stated purposes above.
+
+\newpage
+\section{Code}
 
 \definecolor{keywords}{RGB}{255,0,90}
 \definecolor{comments}{RGB}{0,0,113}
@@ -1256,6 +1275,248 @@ pca_exTree_pred = tree_est_wPCA.predict(X_test_transf)
 # In[ ]:
 
 #write to file
+
+
+# coding: utf-8
+
+# # This notebook outlines the final model tuning and set of predictions that ML Marauders have made for CS 181 Practical 1
+
+# In[1]:
+
+get_ipython().magic(u'matplotlib inline')
+import pandas as pd
+import numpy as np
+import scipy as sp
+import matplotlib.pyplot as plt
+import pickle
+from sklearn.linear_model import Ridge, LogisticRegression, LogisticRegressionCV, Lasso
+from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.cross_validation import train_test_split, KFold
+from sklearn.metrics import mean_squared_error
+
+
+# ## Load and gently process the data (much of the preprocessing was done in FINAL.ipynb)
+
+# In[2]:
+
+# df_train = pd.read_csv('sam_data/rdk_feat_eng_whole_df_train_orig_features.csv')
+# df_test = pd.read_csv('sam_data/rdk_feat_eng_whole_df_test_orig_features.csv')
+# df_train = pd.read_csv('final_data/FINAL_train.csv')
+# df_test = pd.read_csv('final_data/FINAL_test.csv')
+df_train = pd.read_csv('FINAL_interactions/FINAL_train_25_interactions.csv')
+df_test = pd.read_csv('FINAL_interactions/FINAL_test_25_interactions.csv')
+df_train.head()
+
+
+# In[3]:
+
+df_test.head()
+
+
+# In[4]:
+
+# Drop the 'smiles' and 'Id' columns
+df_train = df_train.drop(['smiles'], axis=1)
+df_test = df_test.drop(['Id'], axis=1)
+df_test = df_test.drop(['smiles'], axis=1)
+
+# Store gap values
+Y_train = df_train.gap.values
+
+# Delete 'gap' column
+df_train = df_train.drop(['gap'], axis=1)
+X_train = df_train.values
+X_test = df_test.values
+print "Train features:", X_train.shape, "Train gap:", Y_train.shape
+print "Test features:", X_test.shape
+
+
+# In[5]:
+
+# Split training data into training and validation sets as well as begin some k-fold CV
+cross_X_train, cross_X_valid, cross_Y_train, cross_Y_valid = train_test_split(X_train, Y_train, test_size=0.33, random_state=42)
+
+
+# #### For classification purposes, round target values to nearest .5
+
+# In[6]:
+
+# Round to nearest integer
+# cross_Y_train_labels, cross_Y_valid_labels = np.round(cross_Y_train), np.round(cross_Y_valid)
+# Y_train_labels = np.round(Y_train)
+# Round to nearest .5
+cross_Y_train_labels, cross_Y_valid_labels = (((np.round(2*cross_Y_train)/2.0)-0.5)/0.5).astype(int), (((np.round(2*cross_Y_valid)/2.0)-0.5)/0.5).astype(int)
+Y_train_labels = (((np.round(2*Y_train)/2.0)-.5)/.5).astype(int)
+# Round to nearest .25
+# cross_Y_train_labels, cross_Y_valid_labels = (((np.round(4*cross_Y_train)/4.0)-.25)/.25).astype(int), (((np.round(4*cross_Y_valid)/4.0)-.25)/.25).astype(int)
+# Y_train_labels = (((np.round(4*Y_train)/4.0)-.25)/.25).astype(int)
+
+
+# In[7]:
+
+print "'Training' features: ", cross_X_train.shape
+print "'Validate' features: ", cross_X_valid.shape
+
+
+# # GOAL:
+# 
+# This notebook is set-up to chain together classification and regression methods. The thought is that we can, after we've trained the two models, to first apply a classifier to the data (in a clustering kind of sense) and then use the category or neighborhood that the sample is assigned as an additional feature to perform regression. Here the category or label will be the closest integer to the gap value. The idea behind this is to hijack the regression into a local region of the expected HOMO-LUMO gap based on the label. The hope is that this will pin the regressor closer to the right value. 
+# 
+# It's imperative that we get as accurate of a classifier as we can.
+# 
+# Fingers crossed.
+
+# ### First: Let's build a classifier that will adequately label the samples
+# 
+# We'll start with Logistic Regression and try to fit the best model using a collection of C values
+
+# In[8]:
+
+get_ipython().run_cell_magic(u'time', u'', u'\nlogReg_training_acc = 0\nlogReg_test_acc = 0\n\nCs = [0.1, 1.0]\n\nfor c in Cs:\n    clf_logReg=LogisticRegression(penalty="l2",C=c, solver=\'lbfgs\')\n    clf_logReg.fit(cross_X_train,cross_Y_train_labels)\n    training_acc = clf_logReg.score(cross_X_train,cross_Y_train_labels)\n    test_acc = clf_logReg.score(cross_X_valid,cross_Y_valid_labels)\n    print c, test_acc\n    if logReg_test_acc < test_acc:\n        logReg_test_acc = test_acc\n        logReg_training_acc = training_acc\n        best_logReg = clf_logReg')
+
+
+# In[9]:
+
+logReg_training_acc = best_logReg.score(cross_X_train,cross_Y_train_labels)
+logReg_test_acc = best_logReg.score(cross_X_valid,cross_Y_valid_labels)
+print "Training Accuracy: %0.3f" % logReg_training_acc
+print "Test Accuracy: %0.3f" % logReg_test_acc
+
+
+# #### Concatenate predicted labels onto test/validation set
+
+# In[10]:
+
+def adding_labels(feat_matrix,labels,label_dim):
+    '''Helper function that creates sparse binary array to concatenate to feat_matrix'''
+    # Create empty matrix 
+    added_cols = np.zeros((labels.shape[0],label_dim))
+    # Increment entry that corresponds to the sample having the specified label
+    for ii in xrange(labels.shape[0]):
+        added_cols[ii,labels[ii]] = 1
+    # Concatenate label columns to feat_matrix
+    feat_matrix = np.concatenate((feat_matrix,added_cols),axis=1)
+    return feat_matrix
+
+
+# In[11]:
+
+if np.max(cross_Y_train_labels) >= np.max(cross_Y_valid_labels):
+    max_label = np.max(cross_Y_train_labels)+1
+else:
+    max_label = np.max(cross_Y_valid_labels)+1
+
+cross_X_train = adding_labels(cross_X_train,cross_Y_train_labels,max_label)
+
+cross_X_valid = adding_labels(cross_X_valid,cross_Y_valid_labels,max_label)
+
+
+# ## Now generating a Random Forest Regression
+
+# In[12]:
+
+get_ipython().run_cell_magic(u'time', u'', u'RF_RMSE = 100\nnum_estimators = [64, 96, 128]\n\n    \nfor n_estimators in num_estimators:\n\n    rf_reg = RandomForestRegressor(n_estimators=n_estimators,max_features=\'sqrt\', n_jobs=3)\n    rf_reg.fit(cross_X_train,cross_Y_train)\n    y_pred = rf_reg.predict(cross_X_valid)\n\n    RMSE = np.sqrt(mean_squared_error(cross_Y_valid, y_pred))\n    if RMSE < RF_RMSE:\n        print n_estimators, RMSE\n        RF_RMSE = RMSE\n        RF_estimators = n_estimators\n        best_RF = rf_reg\n            \nprint "RandomForest with {0} estimators had RMSE of {1}".format(RF_estimators,RF_RMSE)        ')
+
+
+# ## We're also going to tune a typical Linear Regression to have double coverage (either Ridge or Lasso)
+
+# In[13]:
+
+get_ipython().run_cell_magic(u'time', u'', u'lasso_RMSE = 100\nalphas = np.logspace(-4, -1, 5)\n\nfor alpha in alphas:\n    lasso_reg = Lasso(alpha=alpha)\n    lasso_reg.fit(cross_X_train, cross_Y_train)\n    y_pred = lasso_reg.predict(cross_X_valid)\n    \n    RMSE = np.sqrt(mean_squared_error(cross_Y_valid,y_pred))\n    if RMSE < lasso_RMSE:\n        print alpha, RMSE\n        lasso_RMSE = RMSE\n        lasso_alpha = alpha\n        best_lasso = lasso_reg\n        \nprint "Lasso RMSE: {0} with alpha: {1}".format(lasso_RMSE,lasso_alpha)')
+
+
+# In[ ]:
+
+# %%time
+# ridge_RMSE = 100
+# alphas = np.logspace(-4, 1, 30)
+
+# for alpha in alphas:
+#     ridge_clf = Ridge(alpha=alpha)
+#     ridge_clf.fit(X_train_clf, cross_Y_train)
+#     y_pred = ridge_clf.predict(X_valid_clf)
+    
+#     RMSE = np.sqrt(mean_squared_error(cross_Y_valid,y_pred))
+#     if RMSE < ridge_RMSE:
+#         ridge_RMSE = RMSE
+#         ridge_alpha = alpha
+#         best_ridge = ridge_clf
+        
+# print "Ridge RMSE: {0} with alpha: {1}".format(ridge_RMSE,ridge_alpha)
+
+
+# In[14]:
+
+with open('final2_classifier_and_regressors.pkl','w') as f:
+    pickle.dump((best_logReg, best_RF, best_lasso),f)
+
+
+# In[ ]:
+
+# with open('final_classifier_and_regressors.pkl','r') as fopen:
+#     best_logReg, best_pcaExtraTrees, pcaExtraTrees_components, best_ridge = pickle.load(fopen)
+    
+# After opening this, you may need to re-configure the test and training set, that is if you have to restart the kernel
+
+
+# ## Train on full training set, run on full test set
+
+# Here we will train the classifier and the regressions
+
+# In[15]:
+
+def write_to_file(filename, predictions):
+    with open(filename, "w") as f:
+        f.write("Id,Prediction\n")
+        for i,p in enumerate(predictions):
+            f.write(str(i+1) + "," + str(p) + "\n")
+
+
+# ### Logistic Regression
+
+# In[17]:
+
+get_ipython().run_cell_magic(u'time', u'', u'# Train classifier\nbest_logReg.fit(X_train,Y_train_labels)\n\n# Run classifier on test set\nlabel_pred = best_logReg.predict(X_test)\n\n# Concatenate full training labels to full test set\nX_train_clf = adding_labels(X_train,Y_train_labels,max_label)\n\n# Concatenate predicted labels onto test set as a new feature\nX_test_clf = adding_labels(X_test,label_pred,max_label)\n\nprint "Completed Classification of test set"')
+
+
+# ### Random Forest
+
+# In[18]:
+
+get_ipython().run_cell_magic(u'time', u'', u'# Train ExtraTrees Regressor\nbest_RF.fit(X_train_clf,Y_train)\n\n# Run ExtraTrees Regressor\nRF_pred = best_RF.predict(X_test_clf)\n\n# Save the ExtraTrees Predictions\nwrite_to_file("RF_wlogReg_FINAL2_TWK_11Feb.csv", RF_pred)\n\nprint "Completed Random Forest Regression"')
+
+
+# ### Lasso/Ridge Regression
+
+# In[19]:
+
+# # Train Ridge Regression
+# best_ridge.fit(X_full_train_clf,Y_train)
+
+# # Run Ridge Regressor
+# ridge_pred = best_ridge.predict(X_test_clf)
+
+# # Save the Ridge Predictions
+# write_to_file("ridge_FINAL_TWK_10Feb.csv",ridge_pred)
+# print "Completed Ridge Regression"
+
+# Train Lasso Regression
+best_lasso.fit(X_train_clf,Y_train)
+
+# Run Lasso Regressor
+lasso_pred = best_lasso.predict(X_test_clf)
+
+# Save the Lasso Predictions
+write_to_file("lasso_wlogReg_FINAL2_TWK_11Feb.csv",lasso_pred)
+print "Completed Lasso Regression"
+
+
+# In[ ]:
+
+
+
 
 
 \end{lstlisting}
