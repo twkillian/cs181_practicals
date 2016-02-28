@@ -45,15 +45,13 @@ if __name__ == "__main__":
 	# plt.show()
 
 	print "We've compiled the training data and have split it into training/validation... stay tuned!\n"
-	print full_test.shape
+	print "Train set dims: ", X_train.shape
+	print "Test set dims: ", full_test.shape
 
 	# Standardize the data!
 	# scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
 	# xX_train = scaler.fit_transform(xX_train)
 	# xX_valid = scaler.transform(xX_valid)
-
-	print np.sum(xY_train==8)/float(len(xY_train))
-	print np.sum(xY_valid==8)/float(len(xY_valid))
 
 	n_folds = 5
 	n_jobs = 1
@@ -119,7 +117,7 @@ if __name__ == "__main__":
 	plt.show()
 
 	# Now creating submission
-	create_submission(test_ids,preds,'first_pass_naive_feat_eng_TWK.csv')
+	create_submission(test_ids,preds,'second_pass_naive_feat_eng_TWK.csv')
 
 
 

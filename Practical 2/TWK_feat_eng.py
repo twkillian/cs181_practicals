@@ -58,18 +58,18 @@ def create_data_matrix(start_index, end_index, direc="train", training=True):
         if training:
             add_to_set(tree)
 
-    i = -1
-    for datafile in os.listdir(direc):
-        if datafile == '.DS_Store':
-            continue
+    # i = -1
+    # for datafile in os.listdir(direc):
+        # if datafile == '.DS_Store':
+            # continue
 
-        i += 1
-        if i < start_index:
-            continue 
-        if i >= end_index:
-            break
+        # i += 1
+        # if i < start_index:
+            # continue 
+        # if i >= end_index:
+            # break
 
-        this_row = call_feats(tree,call_set)
+        this_row = call_feats(tree)
         if X is None:
             X = this_row 
         else:
@@ -77,9 +77,9 @@ def create_data_matrix(start_index, end_index, direc="train", training=True):
 
     return X, np.array(classes), ids, 
 
-def call_feats(tree, good_calls):
-    # good_calls = ['sleep', 'dump_line', 'impersonate_user','revert_to_self','kill_process','query_value',]
-    good_calls = list(good_calls)
+def call_feats(tree, good_calls=None):
+    good_calls = ['sleep', 'dump_line', 'impersonate_user','revert_to_self','kill_process','query_value','load','get_computer_name','get_system_directory','query_value','open_key']
+    # good_calls = list(good_calls)
 
     call_counter = {}
     for el in tree.iter():
