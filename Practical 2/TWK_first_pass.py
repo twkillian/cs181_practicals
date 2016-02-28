@@ -47,15 +47,19 @@ if __name__ == "__main__":
 	xX_train = scaler.fit_transform(xX_train)
 	xX_valid = scaler.transform(xX_valid)
 
-	n_folds = 5, n_jobs = 2
+	n_folds = 5
+	n_jobs = 2
 
 	# Initialize different classifiers
-	logReg_clf = LogisiticRegression()
+	logReg_clf = LogisticRegression()
 	nb_clf = GaussianNB()
 	rf_clf = RandomForestClassifier(n_estimators=50,n_jobs=n_jobs)
 
 	# Pass logistic regression through GridSearchCV, just cause
-	gs_logReg_clf = GridSearchCV(logReg_clf, cv=n_folds, n_jobs=n_jobs)
+	Cs=[0.01, 0.1, 1.0, 10.0]
+	parameters = {"C": Cs}
+
+	gs_logReg_clf = GridSearchCV(logReg_clf, param_grid=parameters, cv=n_folds, n_jobs=n_jobs)
 	gs_logReg_clf.fit(xX_train,xY_train)
 	print "BEST", gs_logReg_clf._params_, gs_logReg_clf.best_score_, gs_logReg_clf.grid_scores_
 	best_logReg_clf = gs_logReg_clf.best_estimator_
