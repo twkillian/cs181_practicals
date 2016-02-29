@@ -34,10 +34,11 @@ if __name__ == "__main__":
 	num_of_train_files = len(os.listdir(TRAIN_DIR))
 	num_of_test_files = len(os.listdir(TEST_DIR))
 	good_attributes = TWK_feat_eng.read_attributes('attributes.txt')
-	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, direc=TRAIN_DIR, training=True)
-	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, direc=TEST_DIR, training=False)
+	good_calls = TWK_feat_eng.read_attributes('calls.txt')
+	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, good_calls, direc=TRAIN_DIR, training=True)
+	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, good_calls, direc=TEST_DIR, training=False)
 
-	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.33, random_state=181)
+	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.35, random_state=181)
 
 	# Quickly check to see if distributions are well mixed... first pass showed that the histograms matched up well
 	# plt.figure()
@@ -54,7 +55,7 @@ if __name__ == "__main__":
 	# xX_train = scaler.fit_transform(xX_train)
 	# xX_valid = scaler.transform(xX_valid)
 
-	n_folds = 5
+	n_folds = 10
 	n_jobs = 1
 
 	# Initialize different classifiers
@@ -89,7 +90,7 @@ if __name__ == "__main__":
 
 	gs_rf_clf = GridSearchCV(rf_clf,param_grid=rf_params,cv=n_folds,n_jobs=n_jobs)
 	gs_rf_clf.fit(xX_train,xY_train)
-	print "BEST RF:   ", gs_rf_clf.best_params_, gs_rf_clf.best_score_, gs_rf_clf.grid_scores_
+	print "BEST RF:   ", gs_rf_clf.best_params_, gs_rf_clf.best_score_
 	best_rf_clf = gs_rf_clf.best_estimator_
 	best_rf_clf = best_rf_clf.fit(xX_train,xY_train)
 
@@ -118,7 +119,7 @@ if __name__ == "__main__":
 	plt.show()
 
 	# Now creating submission
-	create_submission(test_ids,preds,'second_pass_feat_eng_plusSJDattributes_TWK.csv')
+	create_submission(test_ids,preds,'third_pass_feat_eng_plusSJDattributes_TWK.csv')
 
 
 

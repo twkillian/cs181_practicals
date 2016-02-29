@@ -81,7 +81,7 @@ def create_data_matrix(start_index, end_index, good_attributes, good_calls=None,
     return X, np.array(classes), ids
 
 def call_feats(tree, good_attributes, good_calls=None):
-    good_calls = ['sleep', 'dump_line', 'impersonate_user','revert_to_self','kill_process','query_value','load','get_computer_name','get_system_directory','query_value','open_key','vm_protect']
+    # good_calls = ['sleep', 'dump_line', 'impersonate_user','revert_to_self','kill_process','query_value','load','get_computer_name','get_system_directory','query_value','open_key','vm_protect']
     # good_calls = list(good_calls)
 
     call_counter = {}
