@@ -85,9 +85,9 @@ if __name__ == "__main__":
 
 	# Just to finely tune our Random Forest, I'm going to pass it through a larger gridsearch
 
-	rf_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
-	"n_estimators": [50, 100, 200, 300], "min_samples_split": [1, 3, 10], \
-	"min_samples_leaf": [1, 3, 10], "bootstrap": [True, False], \
+	rf_params = {"max_depth": [3, None], "max_features": [1, 3], \
+	"n_estimators": [50, 100, 200, 300], "min_samples_split": [1, 3], \
+	"min_samples_leaf": [1, 3], "bootstrap": [True, False], \
 	"criterion": ["gini", "entropy"]}
 
 	gs_rf_clf = GridSearchCV(rf_clf,param_grid=rf_params,cv=n_folds,n_jobs=n_jobs)
@@ -109,11 +109,11 @@ if __name__ == "__main__":
 	gb_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
 	"n_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
 	"min_samples_leaf": [1, 3, 10], "learning_rate": [0.001,0.01,0.1,1], \
-	"loss": ["deviance", "exponential"], "subsample": [0.25, 0.5, 1., 1.5]}
+	"loss": ["deviance", "exponential"], "subsample": [0.25, 0.5, 1.]}
 
 	gs_gb_clf = GridSearchCV(gb_clf,param_grid=gb_params,cv=n_folds,n_jobs=n_jobs)
 	gs_gb_clf.fit(xX_train,xY_train)
-	print "Best GB:  " gs_gb_clf.best_params_, gs_gb_clf.best_score_
+	print "Best GB:  ", gs_gb_clf.best_params_, gs_gb_clf.best_score_
 	best_gb_clf = gs_gb_clf.best_estimator_
 	best_gb_clf = best_gb_clf.fiti(xX_train,xY_train)
 
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 	plt.show()
 
 	# Now creating submission
-	create_submission(test_ids,preds,'third_pass_feat_eng_plusSJDattributes_TWK.csv')
+	create_submission(test_ids,preds,'third_pass_fullSJDcalls_n_attributes_TWK.csv')
 
 
 
