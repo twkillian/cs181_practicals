@@ -16,8 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.grid_search import GridSearchCV
 
 
@@ -38,7 +37,7 @@ if __name__ == "__main__":
 	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, good_calls, direc=TRAIN_DIR, training=True)
 	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, good_calls, direc=TEST_DIR, training=False)
 
-	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.35, random_state=181)
+	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.33, random_state=181)
 
 	# Quickly check to see if distributions are well mixed... first pass showed that the histograms matched up well
 	# plt.figure()
@@ -51,17 +50,20 @@ if __name__ == "__main__":
 	print "Test set dims: ", full_test.shape, "Number of testing files: ", num_of_test_files
 
 	# Standardize the data!
-	# scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
-	# xX_train = scaler.fit_transform(xX_train)
-	# xX_valid = scaler.transform(xX_valid)
+	scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
+	xX_train = scaler.fit_transform(xX_train)
+	xX_valid = scaler.transform(xX_valid)
+
+	X_train = scaler.fit_transform(X_train)
+	full_test = scaler.fit(full_test)
 
 	n_folds = 10
 	n_jobs = 1
 
 	# Initialize different classifiers
 	logReg_clf = LogisticRegression()
-	nb_clf = GaussianNB()
 	rf_clf = RandomForestClassifier()
+	gb_clf = GradientBoostingClassifier()
 
 	# Pass logistic regression through GridSearchCV, just cause
 	Cs=[0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
@@ -84,7 +86,7 @@ if __name__ == "__main__":
 	# Just to finely tune our Random Forest, I'm going to pass it through a larger gridsearch
 
 	rf_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
-	"n_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
+	"n_estimators": [50, 100, 200, 300], "min_samples_split": [1, 3, 10], \
 	"min_samples_leaf": [1, 3, 10], "bootstrap": [True, False], \
 	"criterion": ["gini", "entropy"]}
 
@@ -102,12 +104,33 @@ if __name__ == "__main__":
 	print "Accuracy on validation data:  %0.2f" % (rf_validationAcc)
 	print "#########################################################\n"
 
+	# Now running a gradient boosting classifier, through grid search to finely tune the thing
+
+	gb_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
+	"n_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
+	"min_samples_leaf": [1, 3, 10], "learning_rate": [0.001,0.01,0.1,1], \
+	"loss": ["deviance", "exponential"], "subsample": [0.25, 0.5, 1., 1.5]}
+
+	gs_gb_clf = GridSearchCV(gb_clf,param_grid=gb_params,cv=n_folds,n_jobs=n_jobs)
+	gs_gb_clf.fit(xX_train,xY_train)
+	print "Best GB:  " gs_gb_clf.best_params_, gs_gb_clf.best_score_
+	best_gb_clf = gs_gb_clf.best_estimator_
+	best_gb_clf = best_gb_clf.fiti(xX_train,xY_train)
+
+	gb_trainingAcc = best_gb_clf.score(xX_train,xY_train)
+	gb_validationAcc = best_gb_clf.score(xX_valid, xY_valid)
+
+	print "############# GRADIENT BOOSTING RESULTS ##################"
+	print "Accuracy on training data:    %0.2f" % (gb_trainingAcc)
+	print "Accuracy on validation data:  %0.2f" % (gb_validationAcc)
+	print "#########################################################\n"
+
 	# Now predict against full_test set
 	print "Now predicting against test set"
 
-	if logReg_validationAcc >= rf_validationAcc:
-		best_logReg_clf.fit(X_train,t_train)
-		preds = best_logReg_clf.predict(full_test)
+	if gb_validationAcc >= rf_validationAcc:
+		best_gb_clf.fit(X_train,t_train)
+		preds = best_gb_clf.predict(full_test)
 	else:
 		rf_clf.fit(X_train,t_train)
 		preds = rf_clf.predict(full_test)
