@@ -33,9 +33,9 @@ def create_submission(ids,predictions,filename):
 if __name__ == "__main__":
 	num_of_train_files = len(os.listdir(TRAIN_DIR))
 	num_of_test_files = len(os.listdir(TEST_DIR))
-	good_attributes = SJD_feat_eng.read_attributes()
-	X_train, t_train, train_ids = SJD_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, TRAIN_DIR, training=True)
-	full_test, _, test_ids = SJD_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, TEST_DIR, training=False)
+	good_attributes = TWK_feat_eng.read_attributes()
+	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, TRAIN_DIR, training=True)
+	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, TEST_DIR, training=False)
 
 	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.33, random_state=181)
 
