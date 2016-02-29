@@ -29,7 +29,7 @@ def read_attributes(filename):
     fp = open(filename,'r')
     return [line.strip() for line in fp]
 
-def create_data_matrix(start_index, end_index, good_attributes, good_calls,direc="train", training=True):
+def create_data_matrix(start_index, end_index, good_attributes, good_calls=None, direc="train", training=True):
     X = None
     classes = []
     ids = [] 
@@ -124,10 +124,8 @@ def main():
 
     # Read in attribute names from file
     good_attributes = read_attributes('attributes.txt')
-    # good_calls = read_attributes('calls.txt')
+    good_calls = read_attributes('calls.txt')
 
-    # X_train, t_train, train_ids = create_data_matrix(0, num_of_train_files, good_attributes, good_calls,TRAIN_DIR, training=True)
-    # X_test, t_test, test_ids  = create_data_matrix(0, num_of_test_files, good_attributes, good_calls,TEST_DIR, training=False)
     X_train, t_train, train_ids = create_data_matrix(0, num_of_train_files, good_attributes, good_calls,TRAIN_DIR, training=True)
     X_test, t_test, test_ids  = create_data_matrix(0, num_of_test_files, good_attributes, good_calls,TEST_DIR, training=False)
 

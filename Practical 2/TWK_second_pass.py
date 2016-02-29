@@ -33,9 +33,9 @@ def create_submission(ids,predictions,filename):
 if __name__ == "__main__":
 	num_of_train_files = len(os.listdir(TRAIN_DIR))
 	num_of_test_files = len(os.listdir(TEST_DIR))
-	good_attributes = TWK_feat_eng.read_attributes()
-	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, TRAIN_DIR, training=True)
-	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, TEST_DIR, training=False)
+	good_attributes = TWK_feat_eng.read_attributes('attributes.txt')
+	X_train, t_train, train_ids = TWK_feat_eng.create_data_matrix(0, num_of_train_files, good_attributes, direc=TRAIN_DIR, training=True)
+	full_test, _, test_ids = TWK_feat_eng.create_data_matrix(0, num_of_test_files, good_attributes, direc=TEST_DIR, training=False)
 
 	xX_train, xX_valid, xY_train, xY_valid = train_test_split(X_train, t_train, test_size=0.33, random_state=181)
 
@@ -46,8 +46,8 @@ if __name__ == "__main__":
 	# plt.show()
 
 	print "We've compiled the training data and have split it into training/validation... stay tuned!\n"
-	print "Train set dims: ", X_train.shape
-	print "Test set dims: ", full_test.shape
+	print "Train set dims: ", X_train.shape, "Number of training files: ", num_of_train_files
+	print "Test set dims: ", full_test.shape, "Number of testing files: ", num_of_test_files
 
 	# Standardize the data!
 	# scaler = StandardScaler(copy=True, with_mean=True, with_std=True)
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 	# Initialize different classifiers
 	logReg_clf = LogisticRegression()
 	nb_clf = GaussianNB()
-	rf_clf = RandomForestClassifier(n_estimators=50, n_jobs=n_jobs)
+	rf_clf = RandomForestClassifier()
 
 	# Pass logistic regression through GridSearchCV, just cause
 	Cs=[0.001, 0.01, 0.1, 1.0, 10.0, 100.0]
@@ -83,7 +83,7 @@ if __name__ == "__main__":
 	# Just to finely tune our Random Forest, I'm going to pass it through a larger gridsearch
 
 	rf_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
-	"num_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
+	"n_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
 	"min_samples_leaf": [1, 3, 10], "bootstrap": [True, False], \
 	"criterion": ["gini", "entropy"]}
 
