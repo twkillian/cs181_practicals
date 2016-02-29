@@ -85,7 +85,7 @@ def call_feats(tree, good_calls=None):
     for el in tree.iter():
         call = el.tag
         if call not in call_counter:
-            call_counter[call] = 0
+            call_counter[call] = 1
         else:
             call_counter[call] += 1
 
