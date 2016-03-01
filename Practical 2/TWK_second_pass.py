@@ -57,8 +57,8 @@ if __name__ == "__main__":
 	X_train = scaler.fit_transform(X_train)
 	full_test = scaler.fit(full_test)
 
-	n_folds = 10
-	n_jobs = 1
+	n_folds = 8
+	n_jobs = 2
 
 	# Initialize different classifiers
 	logReg_clf = LogisticRegression()
@@ -106,9 +106,9 @@ if __name__ == "__main__":
 
 	# Now running a gradient boosting classifier, through grid search to finely tune the thing
 
-	gb_params = {"max_depth": [3, None], "max_features": [1, 3, 10], \
-	"n_estimators": [10, 25, 50, 100], "min_samples_split": [1, 3, 10], \
-	"min_samples_leaf": [1, 3, 10], "learning_rate": [0.001,0.01,0.1,1], \
+	gb_params = {"max_depth": [3, None], "max_features": [1, 3], \
+	"n_estimators": [50, 100, 150], "min_samples_split": [1, 3], \
+	"min_samples_leaf": [1, 3], "learning_rate": [0.001,0.01,0.1], \
 	"loss": ["deviance", "exponential"], "subsample": [0.25, 0.5, 1.]}
 
 	gs_gb_clf = GridSearchCV(gb_clf,param_grid=gb_params,cv=n_folds,n_jobs=n_jobs)
