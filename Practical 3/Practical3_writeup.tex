@@ -145,7 +145,12 @@ We tried to apply sklearn's built in Matrix Factorization code to fill in the mi
 
 \section{Summary}
 
-NEED TO FILL THIS IN!!!!
+Though we are frustrated with our meager predictive success after weeks of sleuthing, hypothesizing, and implementing, we all enjoyed working through the challenges of this practical.  We identified several challenges posed by this practical that made building accurate models difficult: large datasets, missing data, and a bizarre mix knowledge and uncertainty about the datasets and the domain.
+
+
+With over 4 million play counts, 2,000 artists, and 400,000 users, the volume of the dataset limited our modeling ability. The k-Nearest Neighbors algorithm would not finish in a reasonable amount of time.  Neither would matrix factorization or k-means for ideal values of k.  Building models using only a subset of the data proved inaccurate.  Moreover, many of the methods we used (including k-means, kNN) would be thrown off by missing data.  The missing values in profiles dataset needed to be replaced before building models.  Methods for filling these missing values have their own pros and cons, but regardless, the model will rarely perform as well without complete data.
+
+In addition to the challenges posed directly by the data, we had difficulties reasoning about ways to tell if a user would like a particular artist.  For example, we hypothesized users would play artists of similar genres a similar number of times.  The predictions we made under the assumption that the hypothesis was correct were very inaccurate.  Furthermore, the key assumption behind the user median baseline predictions was that a user will listen to all artists the same amount.  That is to say for a given user, regardless of who that artist is, the user will listen to the artist $x$ times.  This assumption seems unlikely to be true, and therefore, it was frustrating to be unable make better predictions than those that rely on this assumption.  In the end, our own most accurate predictions came from a model that relied on this assumption: a weighted average of the global and user medians, where the user median is given more a weight proportional to the number of different artists they listened to (137.77885 MAE).
 
 \newpage
 \section{Code}
