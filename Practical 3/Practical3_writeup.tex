@@ -33,7 +33,7 @@ The primary purpose of our initial data exploration was to understand how the us
 \label{fig:hist_artists_listenedto}
 \end{figure} 
 
-When investigating the total number of plays each user accrued (Fig.~\ref{fig:num_plays_per_user}) we noticed that the distribution is heavily skewed to the left in a Poisson-like manner with an extremely drawn out tail. While it may appear that a majority of users accrued fewer than 2000 plays, more than 50\% of the users total play counts are located outside the plotted distribution. The variance of total plays across these users is so large that there is no discernible mass in the distribution of the play totals. This presented a significant issue for us when we tried to cluster the data according to kNN and k-means algorithms, which will be detailed in Sec.~\ref{sec:unsupervised}.
+When investigating the total number of plays each user accrued (Fig.~\ref{fig:num_plays_per_user}) we noticed that the distribution is heavily skewed to the left in a Poisson-like manner with an drawn out tail. What this represents is that it is increasingly unlikely that any user in the provided data set would listen to an artist more than 500 times. The variance of total plays across these users is so large that there is no discernible mass in the distribution of the play totals. This presented a significant issue for us when we tried to cluster the data according to kNN and k-means algorithms, which will be detailed in Sec.~\ref{sec:modeling}.
 
 \begin{figure}[ht!]
 \centering
@@ -55,7 +55,7 @@ In order to fill in the age of each user, we set out to use as much information 
 \centering
 \includegraphics[width=0.45\textwidth]{images/ages.png} \quad \includegraphics[width=0.45\textwidth]{images/ages_sweden.png}
 \caption{Representative histograms of ages of general user database (l) and ages, filtered by country and gender (r), the medians from which were used to fill in a user's age.}
-\label{fig:num_plays_per_user}
+\label{fig:age_histograms}
 \end{figure} 
 
 \subsection{Feature Engineering} 
@@ -64,19 +64,19 @@ To fill out the feature vector of each user we collected mean and median measure
 
 \subsection{Initial Attempts}\label{sec:initial_attempts}
 
-We wanted to construct a baseline for predicting how many times a user $u$ would listen to an artist $a$ that outlined $u$'s tendency to listen to music more or less than the general population (user median plays per artist, $\bar{Y}_u$ vs. the global median $\bar{Y}$). We also wanted to account for how much other users liked artist $a$ (conditioned on them having listened to $a$) compared to the global median based on the median number of plays from users in the same age range ($\bar{Y}_{age|a}$), who were of the same gender ($\bar{Y}_{g|a}$) and who were from the same country ($\bar{Y}_{c|a}$) as $u$.
+We wanted to construct a baseline for predicting how many times a user $u$ would listen to an artist $a$ that outlined $u$'s tendency to listen to music more or less than the general population (user median plays per artist, $\bar{Y}_u$ vs. the global median $\bar{Y}$). We also wanted to account for the median plays of similar users (conditioned on them having listened to $a$) compared to the global median based on users in the same age range ($\bar{Y}_{age|a}$), who were of the same gender ($\bar{Y}_{g|a}$) and/or who were from the same country ($\bar{Y}_{c|a}$) as $u$.
 
 This baseline prediction for user $u$, given artist $a$ was modeled as:
 
 $$Plays_{u|a} = \bar{Y} + (\bar{Y}-\bar{Y}_u) + (\bar{Y}-\bar{Y}_{age|a}) + (\bar{Y}-\bar{Y}_{s|a})+ (\bar{Y}-\bar{Y}_{c|a})  $$
 
-The aim of what we called Bias Summation, affectionately known as the BS method, was to adjust the naive predictions based on only global and user median play counts by accounting for users of similar demographic profile to user $u$ and how they chose to listen to artist $a$. We later wanted to extend this method and augment the above sum by comparing how the median number of plays from user $u$ compared to the medians of those users of similar demographics, not conditioned on any artist, but ran out of time.
+The aim of what we called Bias Summation was to adjust the naive predictions based on only global and user median play counts by accounting for users of similar demographic profile to user $u$ and how they chose to listen to artist $a$. We later wanted to extend this method and augment the above sum by comparing how the median number of plays from user $u$ compared to users of similar demographics, not conditioned on any artist, but ran out of time.
 
-Another initial attempt we made was to use the two baselines and compute a weighted average between them. This weight was computed based on the number of unique artists each user listened to. Our reasoning behind this was that if a user hadn't listened to many artists, that there wouldn't be as much information to inform any particular prediction and their median value for number of plays wouldn't be as informative for an additional artist. In contrast, if a user had listened to many artists, we would feel more confident in using their median values of plays for a prediction. Thus, we computed the following predictions for each user without regard to artist: $$Plays_{u} = (\frac{1}{n})\bar{Y} + (1 - \frac{1}{n})\bar{Y}_u$$ where n is the number of artists, user $u$ listened to.
+Another initial attempt we made was to use the two baselines and compute a weighted average between them. This weight was computed based on the number of unique artists each user listened to. Our reasoning was that if a user hadn't listened to many artists, there wouldn't be much information to form a prediction and the median value for number of plays wouldn't be as informative. In contrast, if a user had listened to many artists, we would feel more confident in using their median values of plays for a prediction. Thus, we computed the following predictions for each user without regard to artist: $$Plays_{u} = \left(\frac{1}{n}\right)\bar{Y} + \left(1 - \frac{1}{n}\right)\bar{Y}_u$$ where n is the number of artists, user $u$ listened to.
 
 \section{Results}
 
-As summarized above, we tried a variety of methods and heuristics to predict a user's number of plays for a particular artist after aggregating user data according to demographic information. These approaches were oftentimes computationally prohibitive within the time frame of the practical, according to our implementation. The results of these various methods and approaches are summarized in Table~\ref{table:results}.
+As summarized in Sec.~\ref{sec:initial_attempts} and Sec.~\ref{sec:modeling}, we tried a variety of methods and heuristics to predict a user's number of plays for a particular artist after aggregating user data according to demographic information. These approaches were oftentimes computationally prohibitive within the time frame of the practical, according to our implementation. The results of these various methods and approaches are summarized in Table 1.
 
 
 \begin{table}[]
@@ -90,9 +90,9 @@ Weighted Average between Global and User Medians & 137.77885\\
 {\bf Per-user Median} & 137.79146\\
 \\
 SGD Regression using Huber Loss & 144.60821 \\
-Linear Regression on Means using L-2 Loss &  160.23209 \\
+Linear Regression on Means/Medians using L-2 Loss &  160.23209 \\
 %Unbiased Estimators & 168.03096\\
-k-means on Profile + Artists &  181.02842\\
+Ensemble Regression of k-means with Means/Medians  &  181.02842\\
 Bias Summation & 189.57480\\
 \\
 {\bf Global Median} & 201.78204\\
@@ -106,7 +106,7 @@ NMF & N/A\\
 \caption{Model Results}
 \end{table}
 
-\section{Modeling Techniques with Discussion} 
+\section{Modeling Techniques with Discussion}\label{sec:modeling}
 
 Our general techniques proceeded with the following structure:
 \begin{itemize}
@@ -131,13 +131,13 @@ We tried two separate approaches when trying to evaluate the k nearest neighbors
 
 \subsection{k-Means Clustering}
 
-We performed k-Means clustering by standardizing the data in our training set. The concept that we followed was that as a user was assigned to any particular cluster, the artist for whom we are predicting plays would take on the median value of the cluster mean for that artist. Due to sparsity, this resulted into biasing our data against the highest value for plays in the data set which was orders of magnitude higher than the median number of plays per artist. The result of this standardization was that the predicted number of plays for most user, artist pairing was set to zero. This wasn't a very effective implementation and as such we received a MAE score of 181.02842.
+In order to perform k-Means clustering we standardized the data in our training set, both indicator variables and the number of plays of each artist by subtracting the mean and dividing by the standard deviation. The concept that we followed was that as a user was assigned to any particular cluster, the artist for whom we are predicting plays would take on the median value of the cluster mean for that artist. Due to sparsity, this resulted into biasing our data against the highest value for plays in the data set which was often significantly greater than the median number of plays per artist. The result of this standardization, and by finding 25 clusters, was that the predicted number of plays for most user, artist pairing was set to zero even after rescaling the prediction by adding in the mean and multiplying by the standard deviation. This wasn't a very effective implementation and as such we received a MAE score of 181.02842. We felt that if we had more clusters we would be able to closer approximate a users number of listens as we would have a tighter fit of similar users in each cluster. We started a run, looking for 1000 clusters but early diagnostics showed that we would have needed 200 hours for the clustering to be completed on the training data. Time we didn't have.
 	
 \subsection{Regression against means and medians}
 
-We wanted to investigate the relationship between the means and medians of different quantitative measure of each user's music preferences, those of the user database as a whole as well as other users listening activity for the artist that we're trying to predict for the particular user. We performed two different kinds of regressions based on the loss function we hoped to optimize. The first regression was generic Linear Regression with L-2 loss. This performed worse than we expected (160.23209 MAE) on the test set which led us to investigate other loss functions.
+We wanted to investigate the relationship between the means and medians of different quantitative measure of each user's music preferences, those of the user database as a whole as well as other users listening activity for the artist that we're trying to predict for the particular user. We performed two different kinds of regressions based on the loss function we hoped to optimize. The first regression was generic Linear Regression with L-2 loss. This performed worse than we expected (160.23209 MAE) on the test set which led us to investigate other loss functions. We determined that minimizing the sum of squared errors wasn't the best method as the evaluative metric used in the kaggle competition was that of absolute error.
 
-We settled on running Stochastic Gradient Descent using Huber loss. We decided on Huber loss because it was designed to be a piecewise approximation between squared loss and absolute loss. This piecewise definition of the loss function is more robust against outliers and otherwise non-smooth/discrete data. We felt as though this loss function was well suited for the type of data that we had. Our performance improved over regression using L-2 loss, achieving a decrease of close to 16 points (144.60821).
+We settled on running Stochastic Gradient Descent using Huber loss. We decided on Huber loss because it was designed to be a piecewise approximation between squared loss and absolute loss, which is a closer representation of the kaggle evaluation metric. We figured that by attempting to minimize this loss while applying regression techniques would better approximate the data we were given and how our methods were evaluated. This piecewise definition of the loss function is also more robust against outliers and otherwise non-smooth/discrete data. Our performance improved over regression using L-2 loss, achieving a decrease of close to 16 points (144.60821 MAE).
 
 \subsection{Matrix Factorization}
 
