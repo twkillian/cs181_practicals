@@ -60,6 +60,16 @@ def run_games(learner, hist, iters = 100, t_len = 100):
 
         # Loop until you hit something.
         while swing.game_loop():
+
+            # This is where we build sarsa arrays utilizing learner.method()
+            # You can get the action via learner.last_action (False=0/glide, True=1/jump)
+            # You can get the state via learner.last_state
+            # You can get the reward via learner.last_reward (0,+1 if pass, -5 if hit, -10 if fall off screen)
+            # Can infer gravity by checking monkey velocity from time step to time step if action is false
+                # Gravity is an integer 1, 2, 3, or 4
+
+            # import pdb
+            # pdb.set_trace()
             pass
         
         # Save score history.
