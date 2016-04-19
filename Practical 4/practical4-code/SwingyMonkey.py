@@ -174,8 +174,8 @@ class SwingyMonkey:
                                  (tree['x']-(self.iter+self.background_img.get_width()), tree['y'],
                                   self.tree_img.get_width(), self.tree_gap))
                 
-            trunk_left  = tree['x'] + 215
-            trunk_right = tree['x'] + 290
+            trunk_left = tree['x']
+            trunk_right = tree['x'] + self.tree_img.get_width()
             trunk_top   = tree['y']
             trunk_bot   = tree['y'] + self.tree_gap
 
