@@ -76,7 +76,7 @@ class Learner(object):
         self.last_reward = reward
 
 
-def run_games(learner, hist, eps=0.9, gam=0.95, alph=0.65, iters = 100, t_len = 100, N=5):
+def run_games(learner, hist, eps=0.9, gam=0.95, iters = 100, t_len = 100, N=1):
     '''
     Driver function to simulate learning by having the agent play a sequence of games.
     '''
@@ -131,6 +131,7 @@ def run_games(learner, hist, eps=0.9, gam=0.95, alph=0.65, iters = 100, t_len = 
         total_actions.append(actions)
         total_rewards.append(rewards)
         
+        
         X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
         y_train = np.array([total_rewards[jj][kk] for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
 
@@ -144,10 +145,12 @@ def run_games(learner, hist, eps=0.9, gam=0.95, alph=0.65, iters = 100, t_len = 
         # pdb.set_trace()
         for n in range(N):
             # Generate new X(state,action) and y(reward) lists from newly run batch, based off of Q-estimator and using prior rewards a la Ernst '06'
-            X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj])-1)])
-            y_train = np.array([total_rewards[jj][kk] + (gam * np.max([extraTrees.predict(np.append(total_states[jj][kk+1],act)) \
-                for act in range(learner.num_actions)])) for jj in range(ii+1) for kk in range(len(total_actions[jj])-1) ])
-
+            X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
+            y_train = np.array([total_rewards[jj][kk] + (gam * np.max([extraTrees.predict(np.append(total_states[jj][kk],act)) \
+                for act in range(learner.num_actions)])) for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
+            # X_train = np.array([np.append(states[kk],actions[kk]) for kk in range(len(states)-1)])
+            # y_train = np.array([rewards[kk] + (gam * np.max([extraTrees.predict(np.append(states[kk],act)) \
+            #     for act in range(learner.num_actions)])) for kk in range(1,len(states)) ])
             # Re-fit regression to refine optimal policy according to expected reward.
             extraTrees = ExtraTreesRegressor(n_estimators=50)
             extraTrees.fit(X_train,y_train)
@@ -157,7 +160,10 @@ def run_games(learner, hist, eps=0.9, gam=0.95, alph=0.65, iters = 100, t_len = 
 
         # Reset the state of the learner.
         learner.reset()
-        
+    hist['state_history'] = total_states
+    hist['action_history'] = total_actions
+    hist['reward_history'] = total_rewards
+    hist['score_history'] = total_scores 
     return
 
 
@@ -168,13 +174,9 @@ if __name__ == '__main__':
 
 	# Empty list to save history.
     hist = {}
-    hist['state'] = {}
-    hist['action'] = {}
-    hist['reward'] = {}
-    hist['score'] = []
 
 	# Run games. 
-    run_games(agent, hist, 100, 10)
+    run_games(agent, hist, 100, 1)
 
 	# Save history. 
     with open("hist","w") as f:
