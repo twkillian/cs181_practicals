@@ -1,7 +1,7 @@
 # Imports.
 import numpy as np
 import numpy.random as npr
-
+import pickle
 from SwingyMonkey import SwingyMonkey
 
 
@@ -58,6 +58,11 @@ def run_games(learner, hist, iters = 100, t_len = 100):
                              action_callback=learner.action_callback,
                              reward_callback=learner.reward_callback)
 
+        # Initialize history dictionaries for iteration ii
+        hist['state'][ii] = []
+        hist['action'][ii] = []
+        hist['reward'][ii] = []
+
         # Loop until you hit something.
         while swing.game_loop():
 
@@ -68,12 +73,20 @@ def run_games(learner, hist, iters = 100, t_len = 100):
             # Can infer gravity by checking monkey velocity from time step to time step if action is false
                 # Gravity is an integer 1, 2, 3, or 4
 
-            import pdb
-            pdb.set_trace()
-            pass
+            # import pdb
+            # pdb.set_trace()
+
+            hist['state'][ii].append(learner.last_state)
+            hist['action'][ii].append(learner.last_action)
+            hist['reward'][ii].append(learner.last_reward)
+
+        else: # Get final action,reward and state just to see how the monkey failed.
+            hist['state'][ii].append(learner.last_state)
+            hist['action'][ii].append(learner.last_action)
+            hist['reward'][ii].append(learner.last_reward)
         
         # Save score history.
-        hist.append(swing.score)
+        hist['score'].append(swing.score)
 
         # Reset the state of the learner.
         learner.reset()
@@ -84,15 +97,21 @@ def run_games(learner, hist, iters = 100, t_len = 100):
 if __name__ == '__main__':
 
 	# Select agent.
-	agent = Learner()
+    agent = Learner()
 
 	# Empty list to save history.
-	hist = []
+    hist = {}
+    hist['state'] = {}
+    hist['action'] = {}
+    hist['reward'] = {}
+    hist['score'] = []
 
 	# Run games. 
-	run_games(agent, hist, 20, 10)
+    run_games(agent, hist, 100, 10)
 
 	# Save history. 
-	np.save('hist',np.array(hist))
+    with open("hist","w") as f:
+        pickle.dump(hist,f)
+	# np.save('hist',np.array(hist))
 
 

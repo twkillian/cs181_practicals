@@ -106,7 +106,7 @@ class SwingyMonkey:
 
         # Construct the state dictionary to return.
         return { 'score': self.score,
-                 'tree': { 'dist': next_tree['x']+215-self.monkey_right,
+                 'tree': { 'dist': next_tree['x']-self.monkey_right,
                            'top': self.screen_height-next_tree['y'],
                            'bot': self.screen_height-next_tree['y']-self.tree_gap},
                  'monkey': { 'vel': self.vel,
@@ -264,5 +264,7 @@ if __name__ == '__main__':
 
     # Loop until you hit something.
     while game.game_loop():
+        import pdb
+        pdb.set_trace()
         pass
 
