@@ -264,7 +264,5 @@ if __name__ == '__main__':
 
     # Loop until you hit something.
     while game.game_loop():
-        import pdb
-        pdb.set_trace()
         pass
 
