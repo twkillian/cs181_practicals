@@ -68,8 +68,6 @@ def run_games(learner, hist, iters = 100, t_len = 100):
             # Can infer gravity by checking monkey velocity from time step to time step if action is false
                 # Gravity is an integer 1, 2, 3, or 4
 
-            import pdb
-            pdb.set_trace()
             pass
         
         # Save score history.
@@ -90,9 +88,9 @@ if __name__ == '__main__':
 	hist = []
 
 	# Run games. 
-	run_games(agent, hist, 20, 10)
+	run_games(agent, hist, 100, 1)
 
 	# Save history. 
-	np.save('hist',np.array(hist))
+	np.save('random_hist',np.array(hist))
 
 
