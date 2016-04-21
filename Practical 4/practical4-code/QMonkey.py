@@ -76,7 +76,7 @@ class Learner(object):
         self.last_reward = reward
 
 
-def run_games(learner, hist, eps=0.9, gam=0.95, iters = 100, t_len = 100, N=1):
+def run_games(learner, hist, eps=0.65, gam=0.5, iters = 100, t_len = 100, N=1):
     '''
     Driver function to simulate learning by having the agent play a sequence of games.
     '''
@@ -131,18 +131,16 @@ def run_games(learner, hist, eps=0.9, gam=0.95, iters = 100, t_len = 100, N=1):
         total_actions.append(actions)
         total_rewards.append(rewards)
         
-        
-        X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
-        y_train = np.array([total_rewards[jj][kk] for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
+        if ii == 0:
+            X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
+            y_train = np.array([total_rewards[jj][kk] for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
 
-        #Build tree using first stage Q-learning
-        extraTrees = ExtraTreesRegressor(n_estimators=50)
-        extraTrees.fit(X_train, y_train)
+            #Build tree using first stage Q-learning
+            extraTrees = ExtraTreesRegressor(n_estimators=50)
+            extraTrees.fit(X_train, y_train)
 
         # Refit random forest estimator based on composite epochs
         # Iteratively refine the optimal policy within the current epoch
-        # import pdb
-        # pdb.set_trace()
         for n in range(N):
             # Generate new X(state,action) and y(reward) lists from newly run batch, based off of Q-estimator and using prior rewards a la Ernst '06'
             X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
