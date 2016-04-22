@@ -16,6 +16,8 @@ class Learner(object):
         self.last_action = None
         self.last_reward = None
         self.eps = None
+        self.gam = None
+        self.alph = None
         self.estimator = None
         self.num_actions = None
         self.gravity = 4
@@ -54,11 +56,11 @@ class Learner(object):
         st_tuple = self.create_state_tuple(state)
 
         if not self.fitted:
-            new_action = npr.rand() < 0.3
+            new_action = npr.rand() < 0.1
         else:
             # gather new_action in an epsilon greedy manner according to Q estimator
             if npr.rand() > self.eps:
-                new_action = np.rand() < 0.3 # Currently defaults to gliding... may want to adjust
+                new_action = npr.rand() < 0.1 # Currently defaults to gliding... may want to adjust
             else:
                 new_action = np.argmax([self.estimator.predict(np.append(st_tuple,a)) for a in range(self.num_actions)])
         
@@ -76,13 +78,15 @@ class Learner(object):
         self.last_reward = reward
 
 
-def run_games(learner, hist, eps=0.65, gam=0.5, iters = 100, t_len = 100, N=1):
+def run_games(learner, hist, eps=0.5, gam=0.5, alph=0.75, iters = 20, t_len = 100):
     '''
     Driver function to simulate learning by having the agent play a sequence of games.
     '''
 
     # Place alpha and epsilon values into learner
     learner.eps = eps
+    learner.gam = gam
+    learner.alph = alph
     learner.num_actions = 2
 
     # Initialize estimator for Q-function
@@ -116,7 +120,7 @@ def run_games(learner, hist, eps=0.65, gam=0.5, iters = 100, t_len = 100, N=1):
             if learner.learn_g & (loop_counter > 1):
                 learner.infer_g(states,actions)
                 for pp in range(len(states)):
-                    states[pp][-2] = learner.gravity
+                    states[pp][-1] = learner.gravity
 
             loop_counter += 1
 
@@ -127,37 +131,44 @@ def run_games(learner, hist, eps=0.65, gam=0.5, iters = 100, t_len = 100, N=1):
         
         # Append histories from most recent epoch, create training arrays
         total_scores.append(swing.score)
-        total_states.append(states)
-        total_actions.append(actions)
-        total_rewards.append(rewards)
-        
+        total_states += states
+        total_actions += actions
+        total_rewards += rewards
+        # Iteratively refine the optimal policy after each epoch
         if ii == 0:
-            X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
-            y_train = np.array([total_rewards[jj][kk] for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
+            X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_states))])
+            y_train = np.array(total_rewards)
 
             #Build tree using first stage Q-learning
             extraTrees = ExtraTreesRegressor(n_estimators=50)
             extraTrees.fit(X_train, y_train)
 
         # Refit random forest estimator based on composite epochs
-        # Iteratively refine the optimal policy within the current epoch
-        for n in range(N):
+        
+        else:
             # Generate new X(state,action) and y(reward) lists from newly run batch, based off of Q-estimator and using prior rewards a la Ernst '06'
-            X_train = np.array([np.append(total_states[jj][kk],total_actions[jj][kk]) for jj in range(ii+1) for kk in range(len(total_actions[jj]))])
-            y_train = np.array([total_rewards[jj][kk] + (gam * np.max([extraTrees.predict(np.append(total_states[jj][kk],act)) \
-                for act in range(learner.num_actions)])) for jj in range(ii+1) for kk in range(len(total_actions[jj])) ])
-            # X_train = np.array([np.append(states[kk],actions[kk]) for kk in range(len(states)-1)])
-            # y_train = np.array([rewards[kk] + (gam * np.max([extraTrees.predict(np.append(states[kk],act)) \
-            #     for act in range(learner.num_actions)])) for kk in range(1,len(states)) ])
+            X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_rewards)-1)])
+            # Construct Bellman's equations to get expected rewards based on next proposed state
+            y_train = np.array([agent.estimator.predict(np.append(total_states[kk],total_actions[kk])) \
+                +agent.alph*(total_rewards[kk]+(agent.gam * np.max([agent.estimator.predict(np.append(total_states[kk+1]\
+                ,act)) for act in range(agent.num_actions)]))-agent.estimator.predict(np.append(total_states[kk],total_actions[kk])))\
+                for kk in range(len(total_states)-1)])
+            
             # Re-fit regression to refine optimal policy according to expected reward.
             extraTrees = ExtraTreesRegressor(n_estimators=50)
             extraTrees.fit(X_train,y_train)
+
+        # As we refine the policy, we should reduce the amount we explore.    
+        if ii % 10 == 0:
+            learner.eps += 0.05
 
         learner.estimator = extraTrees
         learner.fitted = True        
 
         # Reset the state of the learner.
         learner.reset()
+
+    # Place state, action, reward and score histories to be saved by wrapper.    
     hist['state_history'] = total_states
     hist['action_history'] = total_actions
     hist['reward_history'] = total_rewards
@@ -174,10 +185,10 @@ if __name__ == '__main__':
     hist = {}
 
 	# Run games. 
-    run_games(agent, hist, 100, 1)
+    run_games(agent, hist, iters=100, t_len=5)
 
 	# Save history. 
-    with open("hist","w") as f:
+    with open("qlearn_online_hist","w") as f:
         pickle.dump(hist,f)
 	# np.save('hist',np.array(hist))
 
