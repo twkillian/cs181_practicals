@@ -14,7 +14,7 @@ if __name__ == '__main__':
 	with open('random_hist','r') as randf: # Load results from random policy
 		random_hist = pickle.load(randf)
 
-	with open('qlearn_online_hist','r') as qf: # Load online Q-learning results
+	with open('qlearn_final_hist','r') as qf: # Load online Q-learning results
 		qlearn_hist = pickle.load(qf)
 
 	with open('batch_hist','r') as bf: # Load batch RL results

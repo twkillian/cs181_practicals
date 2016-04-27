@@ -78,7 +78,7 @@ class Learner(object):
         self.last_reward = reward
 
 
-def run_games(learner, hist, eps=0.5, gam=0.5, alph=0.75, iters = 20, t_len = 100):
+def run_games(learner, hist, eps=0.5, gam=0.5, alph=0.75, iters = 20, t_len = 100, test=False):
     '''
     Driver function to simulate learning by having the agent play a sequence of games.
     '''
@@ -134,36 +134,43 @@ def run_games(learner, hist, eps=0.5, gam=0.5, alph=0.75, iters = 20, t_len = 10
         total_states += states
         total_actions += actions
         total_rewards += rewards
-        # Iteratively refine the optimal policy after each epoch
-        if ii == 0:
-            X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_states))])
-            y_train = np.array(total_rewards)
-
-            #Build tree using first stage Q-learning
-            extraTrees = ExtraTreesRegressor(n_estimators=50)
-            extraTrees.fit(X_train, y_train)
-
-        # Refit random forest estimator based on composite epochs
         
-        else:
-            # Generate new X(state,action) and y(reward) lists from newly run batch, based off of Q-estimator and using prior rewards a la Ernst '06'
-            X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_rewards)-1)])
-            # Construct Bellman's equations to get expected rewards based on next proposed state
-            y_train = np.array([agent.estimator.predict(np.append(total_states[kk],total_actions[kk])) \
-                +agent.alph*(total_rewards[kk]+(agent.gam * np.max([agent.estimator.predict(np.append(total_states[kk+1]\
-                ,act)) for act in range(agent.num_actions)]))-agent.estimator.predict(np.append(total_states[kk],total_actions[kk])))\
-                for kk in range(len(total_states)-1)])
+        if not test:
+
+            # Iteratively refine the optimal policy after each epoch
+            if ii == 0:
+                X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_states))])
+                y_train = np.array(total_rewards)
+
+                #Build tree using first stage Q-learning
+                extraTrees = ExtraTreesRegressor(n_estimators=50)
+                extraTrees.fit(X_train, y_train)
+
+            # Refit random forest estimator based on composite epochs
             
-            # Re-fit regression to refine optimal policy according to expected reward.
-            extraTrees = ExtraTreesRegressor(n_estimators=50)
-            extraTrees.fit(X_train,y_train)
+            else:
+                # Generate new X(state,action) and y(reward) lists from newly run batch, based off of Q-estimator and using prior rewards a la Ernst '06'
+                X_train = np.array([np.append(total_states[kk],total_actions[kk]) for kk in range(len(total_rewards)-1)])
+                # Construct Bellman's equations to get expected rewards based on next proposed state
+                y_train = np.array([agent.estimator.predict(np.append(total_states[kk],total_actions[kk])) \
+                    +agent.alph*(total_rewards[kk]+(agent.gam * np.max([agent.estimator.predict(np.append(total_states[kk+1]\
+                    ,act)) for act in range(agent.num_actions)]))-agent.estimator.predict(np.append(total_states[kk],total_actions[kk])))\
+                    for kk in range(len(total_states)-1)])
+                
+                # Re-fit regression to refine optimal policy according to expected reward.
+                extraTrees = ExtraTreesRegressor(n_estimators=50)
+                extraTrees.fit(X_train,y_train)
 
-        # As we refine the policy, we should reduce the amount we explore.    
-        if ii % 10 == 0:
-            learner.eps += 0.05
+            # As we refine the policy, we should reduce the amount we explore.    
+            if ii % 10 == 0:
+                learner.eps += 0.05
 
-        learner.estimator = extraTrees
-        learner.fitted = True        
+            learner.estimator = extraTrees
+            learner.fitted = True
+
+        else:
+
+            learner.fitted = True        
 
         # Reset the state of the learner.
         learner.reset()
@@ -185,11 +192,18 @@ if __name__ == '__main__':
     hist = {}
 
 	# Run games. 
-    run_games(agent, hist, iters=100, t_len=5)
+    run_games(agent, hist, iters=100, t_len=2)
+
+    with open("qlearn_online_hist","w") as g:
+        pickle.dump(hist,g)
+
+    # With optimal policy, run test
+    final_hist = {}
+    run_games(agent,final_hist,iters=100,t_len=5,test=True,eps=1.1)
 
 	# Save history. 
-    with open("qlearn_online_hist","w") as f:
-        pickle.dump(hist,f)
+    with open("qlearn_final_hist","w") as f:
+        pickle.dump(final_hist,f)
 	# np.save('hist',np.array(hist))
 
 

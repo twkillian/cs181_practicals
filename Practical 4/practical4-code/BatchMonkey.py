@@ -214,6 +214,9 @@ if __name__ == '__main__':
         extraTrees.fit(X_train,y_train)
         agent.estimator = extraTrees
 
+    with open("batch_learning_hist","w") as g2:
+        pickle.dump(hist,g2)
+
     # Run game for final 100 iterations
     final_hist = {}
     final_hist['state_history'] = []
