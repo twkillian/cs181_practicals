@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
 	# Initialize estimator
     extraTrees = ExtraTreesRegressor(n_estimators=50)
-    num_batches = 10
+    num_batches = 20
 
     # Empty list to save history.
     hist = {}
